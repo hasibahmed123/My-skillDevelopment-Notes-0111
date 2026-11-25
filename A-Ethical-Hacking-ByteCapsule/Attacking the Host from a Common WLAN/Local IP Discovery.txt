@@ -1,0 +1,86 @@
+============================================================
+          KALI LINUX - LOCAL NETWORK DISCOVERY
+============================================================
+
+[1] CHECK YOUR IP ADDRESS
+------------------------------------------------------------
+ip addr
+
+[2] CHECK YOUR DEFAULT GATEWAY AND SUBNET
+------------------------------------------------------------
+ip route
+
+[3] DISPLAY ONLY YOUR IPV4 ADDRESS
+------------------------------------------------------------
+ip -4 addr show | grep -oP '(?<=inet )[\d.]+(?=/)'
+
+[4] SCAN ALL DEVICES CONNECTED TO YOUR WIFI/LAN
+------------------------------------------------------------
+sudo apt update && sudo apt install arp-scan -y
+
+sudo arp-scan --localnet
+
+[5] DISCOVER DEVICES USING NMAP
+------------------------------------------------------------
+sudo apt install nmap -y
+
+sudo nmap -sn 192.168.1.0/24
+
+NOTE: Replace 192.168.1.0/24 with your actual subnet
+obtained from the 'ip route' command.
+
+[6] COUNT DISCOVERED DEVICES
+------------------------------------------------------------
+sudo nmap -sn 192.168.1.0/24 | grep -c "Nmap scan report"
+
+[7] DISPLAY YOUR IP AND OTHER LAN DEVICES TOGETHER
+------------------------------------------------------------
+echo "===== MY IP ====="
+hostname -I
+echo "===== OTHER LAN DEVICES ====="
+sudo arp-scan --localnet
+
+[8] VIEW ARP / NEIGHBOR CACHE
+------------------------------------------------------------
+ip neigh
+
+============================================================
+              QUICK REFERENCE
+============================================================
+
+YOUR IP:
+    hostname -I
+
+YOUR GATEWAY:
+    ip route
+
+ALL DISCOVERABLE LAN DEVICES:
+    sudo arp-scan --localnet
+
+NETWORK DISCOVERY:
+    sudo nmap -sn 192.168.1.0/24
+
+DEVICE COUNT:
+    sudo nmap -sn 192.168.1.0/24 | grep -c "Nmap scan report"
+
+============================================================
+IMPORTANT NOTES
+============================================================
+
+1. Your own IP is the address assigned to your Kali
+   network interface.
+
+2. The router/gateway is also a network device.
+
+3. ARP scanning generally works only on the local
+   Ethernet/Wi-Fi broadcast network.
+
+4. Sleeping devices, client isolation and VLANs may
+   prevent some devices from appearing.
+
+5. Only scan networks and devices you are authorized
+   to assess.
+
+============================================================
+                    END OF NOTES
+============================================================

