@@ -1,0 +1,600 @@
+============================================================
+       KALI LINUX -> WINDOWS 11
+       LAN PENETRATION TESTING FIELD MANUAL
+============================================================
+
+OBJECTIVE:
+--------
+Assess a Windows 11 host remotely from Kali Linux.
+
+ENVIRONMENT:
+------------
+Attacker : Kali Linux
+Target   : Windows 11
+Network  : Same Wi-Fi / LAN
+Access   : Remote only
+Changes  : No target configuration changes
+
+AUTHORIZED SCOPE:
+-----------------
+1. Network discovery
+2. TCP/UDP port scanning
+3. Service enumeration
+4. Vulnerability identification
+5. Security configuration assessment
+6. Safe authentication testing
+7. Controlled proof-of-concept validation
+8. Reporting and remediation
+
+============================================================
+                 PHASE 01 - RECONNAISSANCE
+============================================================
+
+[STEP 1] Identify Kali IP
+
+    ip -br addr
+
+[STEP 2] Identify network interface
+
+    ip route
+
+[STEP 3] Discover LAN devices
+
+    sudo arp-scan --localnet
+
+[STEP 4] Discover live hosts
+
+    sudo nmap -sn <NETWORK-CIDR>
+
+[STEP 5] Identify target MAC
+
+    ip neigh show <TARGET-IP>
+
+[STEP 6] Test connectivity
+
+    ping -c 4 <TARGET-IP>
+
+
+============================================================
+              PHASE 02 - PORT DISCOVERY
+============================================================
+
+[1] ALL TCP PORTS
+
+    sudo nmap -sS -Pn -p- --open -T3 <TARGET-IP>
+
+[2] COMMON TCP PORTS
+
+    sudo nmap -sS -Pn --top-ports 1000 <TARGET-IP>
+
+[3] SERVICE VERSION DETECTION
+
+    sudo nmap -sV -Pn <TARGET-IP>
+
+[4] DEFAULT SAFE ENUMERATION
+
+    sudo nmap -sC -sV -Pn <TARGET-IP>
+
+[5] UDP DISCOVERY
+
+    sudo nmap -sU --top-ports 100 -Pn <TARGET-IP>
+
+[6] SAVE RESULTS
+
+    sudo nmap -sV -sC -Pn -oA assessment <TARGET-IP>
+
+
+============================================================
+              PHASE 03 - FAMOUS TCP PORTS
+============================================================
+
+PORT   SERVICE       PURPOSE
+------------------------------------------------------------
+20     FTP-DATA      FTP data
+21     FTP           File transfer
+22     SSH           Secure remote shell
+23     TELNET        Legacy remote terminal
+25     SMTP          Mail transfer
+53     DNS           Domain name service (TCP)
+80     HTTP          Web server
+110    POP3          Email retrieval
+111    RPCBIND       RPC service mapping
+135    MSRPC         Windows RPC
+139    NETBIOS       Legacy Windows networking
+143    IMAP          Email retrieval
+179    BGP           Routing protocol
+389    LDAP          Directory service
+443    HTTPS         Secure web server
+445    SMB           Windows file sharing
+465    SMTPS         Secure email
+587    SMTP-SUB      Email submission
+636    LDAPS         Secure LDAP
+993    IMAPS         Secure IMAP
+995    POP3S         Secure POP3
+1433   MSSQL         Microsoft SQL Server
+1521   ORACLE        Oracle database
+2049   NFS           Network file system
+3306   MYSQL         Database
+3389   RDP           Remote desktop
+5432   POSTGRESQL    Database
+5900   VNC           Remote desktop
+5985   WINRM-HTTP    Windows remote management
+5986   WINRM-HTTPS   Secure remote management
+8000   HTTP-ALT      Alternative web server
+8080   HTTP-PROXY    Alternative web service
+8443   HTTPS-ALT     Alternative HTTPS
+9000   HTTP-ALT      Alternative application
+9090   HTTP-ALT      Alternative application
+10000  WEBMIN        Web administration
+
+NOTE:
+-----
+An open port does not automatically mean a vulnerability.
+A service must be identified and assessed independently.
+
+
+============================================================
+              PHASE 04 - SERVICE ENUMERATION
+============================================================
+
+-------------------------
+A. FTP - PORT 21
+-------------------------
+
+Scan:
+
+    nmap -sV -p21 <TARGET-IP>
+
+Check FTP features:
+
+    nmap -p21 --script ftp-syst <TARGET-IP>
+
+Check anonymous access:
+
+    nmap -p21 --script ftp-anon <TARGET-IP>
+
+Possible findings:
+    - Anonymous access
+    - Cleartext authentication
+    - Outdated FTP software
+    - Excessive file permissions
+
+
+-------------------------
+B. SSH - PORT 22
+-------------------------
+
+Scan:
+
+    nmap -sV -p22 <TARGET-IP>
+
+Check authentication methods:
+
+    nmap -p22 --script ssh-auth-methods <TARGET-IP>
+
+Check host algorithms:
+
+    nmap -p22 --script ssh2-enum-algos <TARGET-IP>
+
+Possible findings:
+    - Weak algorithms
+    - Outdated SSH version
+    - Password authentication exposure
+
+
+-------------------------
+C. TELNET - PORT 23
+-------------------------
+
+Scan:
+
+    nmap -sV -p23 <TARGET-IP>
+
+Check connectivity:
+
+    nc -vz <TARGET-IP> 23
+
+Possible findings:
+    - Unencrypted credentials
+    - Legacy remote administration
+    - Weak authentication configuration
+
+
+-------------------------
+D. HTTP - PORTS 80/8080/8000
+-------------------------
+
+Scan:
+
+    nmap -sV -p80,8000,8080 <TARGET-IP>
+
+Check headers:
+
+    curl -I http://<TARGET-IP>
+
+Check HTTP methods:
+
+    nmap -p80,8080 --script http-methods <TARGET-IP>
+
+Check page title:
+
+    nmap -p80,8080 --script http-title <TARGET-IP>
+
+Check TLS:
+
+    nmap -p443 --script ssl-cert,ssl-enum-ciphers <TARGET-IP>
+
+Possible findings:
+    - Information disclosure
+    - Insecure HTTP methods
+    - Outdated applications
+    - Missing security headers
+    - Exposed administrative interfaces
+
+
+-------------------------
+E. MSRPC - PORT 135
+-------------------------
+
+Scan:
+
+    nmap -sV -p135 <TARGET-IP>
+
+Check connectivity:
+
+    nc -vz <TARGET-IP> 135
+
+Possible findings:
+    - Excessive RPC exposure
+    - Unnecessary network services
+    - Information disclosure
+
+
+-------------------------
+F. NETBIOS - PORT 139
+-------------------------
+
+Scan:
+
+    nmap -sV -p139 <TARGET-IP>
+
+Check NetBIOS information:
+
+    nmap -p139 --script nbstat <TARGET-IP>
+
+Possible findings:
+    - Legacy protocol exposure
+    - Network naming information
+    - Unnecessary NetBIOS service
+
+
+-------------------------
+G. SMB - PORT 445
+-------------------------
+
+Scan:
+
+    nmap -sV -p445 <TARGET-IP>
+
+Check supported SMB protocols:
+
+    nmap -p445 --script smb-protocols <TARGET-IP>
+
+Check SMB security mode:
+
+    nmap -p445 --script smb-security-mode <TARGET-IP>
+
+Check SMB signing:
+
+    nmap -p445 --script smb2-security-mode <TARGET-IP>
+
+List shares with authorized credentials:
+
+    smbclient -L //<TARGET-IP> -U <USERNAME>
+
+Possible findings:
+    - SMBv1 enabled
+    - SMB signing not required
+    - Excessive share permissions
+    - Guest access
+    - Outdated SMB implementation
+
+If port 445 is CLOSED:
+    SMB is not accepting connections on TCP 445.
+    Do not assume SMB is exploitable.
+
+
+-------------------------
+H. RDP - PORT 3389
+-------------------------
+
+Scan:
+
+    nmap -sV -p3389 <TARGET-IP>
+
+Check encryption:
+
+    nmap -p3389 --script rdp-enum-encryption <TARGET-IP>
+
+Check connectivity:
+
+    nc -vz <TARGET-IP> 3389
+
+Possible findings:
+    - Weak security configuration
+    - Outdated RDP implementation
+    - Excessive remote-access exposure
+
+
+-------------------------
+I. WINRM - PORTS 5985/5986
+-------------------------
+
+Scan:
+
+    nmap -sV -p5985,5986 <TARGET-IP>
+
+Check HTTP endpoint:
+
+    curl -i http://<TARGET-IP>:5985/wsman
+
+Check connectivity:
+
+    nc -vz <TARGET-IP> 5985
+
+Possible findings:
+    - Unnecessary remote management exposure
+    - Insecure transport configuration
+    - Excessive management access
+
+
+-------------------------
+J. VNC - PORT 5900
+-------------------------
+
+Scan:
+
+    nmap -sV -p5900 <TARGET-IP>
+
+Check connectivity:
+
+    nc -vz <TARGET-IP> 5900
+
+Possible findings:
+    - Unprotected remote desktop
+    - Weak authentication
+    - Insecure VNC configuration
+
+
+============================================================
+             PHASE 05 - UDP ENUMERATION
+============================================================
+
+PORT     SERVICE
+-------------------------
+53       DNS
+67       DHCP SERVER
+68       DHCP CLIENT
+123      NTP
+137      NETBIOS NAME
+138      NETBIOS DATAGRAM
+161      SNMP
+1900     SSDP
+3702     WS-DISCOVERY
+5353     MDNS
+
+Scan:
+
+    sudo nmap -sU -sV --top-ports 100 <TARGET-IP>
+
+Specific scan:
+
+    sudo nmap -sU -p53,123,137,138,161,1900,3702,5353 <TARGET-IP>
+
+Possible findings:
+    - Service information disclosure
+    - Unnecessary UDP services
+    - Legacy protocol exposure
+    - Device discovery information
+
+
+============================================================
+             PHASE 06 - SCENARIO ANALYSIS
+============================================================
+
+SCENARIO 01:
+------------
+PORT 445 OPEN
+
+Investigate:
+    SMB protocol version
+    SMB signing
+    Share permissions
+    Guest access
+    Authentication requirements
+
+SCENARIO 02:
+------------
+PORT 445 CLOSED
+
+Investigate:
+    Other exposed services
+    HTTP applications
+    SSH
+    RDP
+    WinRM
+    UDP services
+
+SCENARIO 03:
+------------
+ALL TCP PORTS FILTERED
+
+Investigate:
+    Network reachability
+    Firewall filtering
+    Wi-Fi client isolation
+    Whether the host is actually online
+
+Do not interpret filtered as vulnerable.
+
+SCENARIO 04:
+------------
+RDP OPEN
+
+Investigate:
+    Encryption
+    Network Level Authentication
+    Authentication requirements
+    Remote access policy
+
+SCENARIO 05:
+------------
+SSH OPEN
+
+Investigate:
+    Supported authentication
+    Algorithm configuration
+    Software version
+    Authorized account access
+
+SCENARIO 06:
+------------
+HTTP OPEN
+
+Investigate:
+    Web server version
+    HTTP methods
+    Security headers
+    Application vulnerabilities
+    Exposed administration pages
+
+SCENARIO 07:
+------------
+SMB AND RDP CLOSED
+
+Investigate:
+    Other exposed services
+    UDP discovery
+    Network segmentation
+    Unnecessary services
+
+SCENARIO 08:
+------------
+NO REACHABLE SERVICES
+
+Conclusion:
+    No remotely accessible TCP service was identified.
+    Report the result rather than assuming an exploit exists.
+
+
+============================================================
+             PHASE 07 - VULNERABILITY VALIDATION
+============================================================
+
+For every finding:
+
+1. Record the service and version.
+2. Identify the relevant CVE, if applicable.
+3. Check the vendor's affected-version advisory.
+4. Determine the required authentication.
+5. Determine the actual attack prerequisites.
+6. Use non-destructive validation.
+7. Record evidence.
+8. Recommend remediation.
+
+Useful tools:
+
+    nmap
+    searchsploit
+    Metasploit (authorized lab validation)
+    Wireshark
+    smbclient
+    curl
+    netcat
+    OpenVAS / Greenbone
+
+Search local Exploit-DB:
+
+    searchsploit <SERVICE-NAME> <VERSION>
+
+IMPORTANT:
+---------
+An Exploit-DB result does not establish that the target is vulnerable.
+Verify exact versions, configuration, and prerequisites.
+
+
+============================================================
+             PHASE 08 - AUTHORIZED ACCESS VALIDATION
+============================================================
+
+Valid remote access requires:
+    1. An exposed remote-access service.
+    2. A supported authentication mechanism.
+    3. Authorized credentials or an approved lab exploit.
+    4. Appropriate account permissions.
+
+SMB:
+    smbclient -L //<TARGET-IP> -U <USERNAME>
+
+SSH:
+    ssh <USERNAME>@<TARGET-IP>
+
+RDP:
+    xfreerdp /v:<TARGET-IP> /u:<USERNAME>
+
+WinRM:
+    Use an approved WinRM client with authorized credentials.
+
+These commands initiate legitimate authentication.
+They do not bypass Windows security.
+
+
+============================================================
+             PHASE 09 - FINAL REPORT
+============================================================
+
+TARGET:
+    Windows 11
+
+ATTACKER:
+    Kali Linux
+
+NETWORK:
+    Shared Wi-Fi
+
+DISCOVERED HOST:
+    <TARGET-IP>
+
+OPEN PORTS:
+    <PORT-LIST>
+
+FILTERED PORTS:
+    <PORT-LIST>
+
+IDENTIFIED SERVICES:
+    <SERVICE-LIST>
+
+VULNERABILITIES:
+    <FINDINGS>
+
+AUTHENTICATION:
+    <RESULTS>
+
+REMOTE ACCESS:
+    <AUTHORIZED RESULT>
+
+RISK:
+    LOW / MEDIUM / HIGH / CRITICAL
+
+RECOMMENDATIONS:
+    1. Disable unnecessary services.
+    2. Restrict inbound firewall rules.
+    3. Require strong authentication.
+    4. Disable obsolete protocols.
+    5. Apply security updates.
+    6. Restrict administrative access.
+    7. Use network segmentation.
+
+============================================================
+                  END OF FIELD MANUAL
+============================================================
