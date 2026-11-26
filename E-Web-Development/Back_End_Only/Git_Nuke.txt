@@ -1,7 +1,5 @@
 Suppose You got DeadLock and running Process bullshits on your Repo, simply deploy this Tsar Bomba:
 
-"I don't care about the current rebase/merge. Make my local repo exactly match GitHub and remove all Git junk."
-
 Run this from anywhere in Command Prompt:
 
 cd /d C:\....(paste Main Path Directory)
