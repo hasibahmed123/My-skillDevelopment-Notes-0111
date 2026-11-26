@@ -1,6 +1,6 @@
 Suppose You got DeadLock and running Process bullshits on your Repo, simply deploy this Tsar Bomba:
 
-Run this from anywhere in Command Prompt:
+Run this from anywhere in Command Prompt--
 
 cd /d C:\....(paste Main Path Directory)
 rmdir /S /Q .git\rebase-merge 2>nul
